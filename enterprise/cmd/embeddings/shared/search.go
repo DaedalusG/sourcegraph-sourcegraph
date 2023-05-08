@@ -12,6 +12,8 @@ import (
 	"github.com/sourcegraph/sourcegraph/lib/errors"
 )
 
+const SIMILARITY_SEARCH_MIN_ROWS_TO_SPLIT = 1000
+
 type readFileFn func(ctx context.Context, repoName api.RepoName, revision api.CommitID, fileName string) ([]byte, error)
 type getRepoEmbeddingIndexFn func(ctx context.Context, repoName api.RepoName) (*embeddings.RepoEmbeddingIndex, error)
 type getQueryEmbeddingFn func(ctx context.Context, query string) ([]float32, error)
@@ -105,8 +107,6 @@ func (a *resultAggregator) Add(repoName api.RepoName, revision api.CommitID, srs
 	sort.Slice(a.results, func(i, j int) bool { return a.results[i].Score() > a.results[j].Score() })
 	a.results = a.results[:min(a.maxResults, len(a.results))]
 }
-
-const SIMILARITY_SEARCH_MIN_ROWS_TO_SPLIT = 1000
 
 func min(a, b int) int {
 	if a < b {
