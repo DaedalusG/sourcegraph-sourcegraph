@@ -1672,9 +1672,7 @@ CREATE TABLE codeintel_initial_path_ranks (
     upload_id integer NOT NULL,
     document_path text DEFAULT ''::text NOT NULL,
     graph_key text NOT NULL,
-    last_scanned_at timestamp with time zone,
-    document_paths text[] DEFAULT '{}'::text[] NOT NULL,
-    deleted_at timestamp with time zone
+    document_paths text[] DEFAULT '{}'::text[] NOT NULL
 );
 
 CREATE SEQUENCE codeintel_initial_path_ranks_id_seq
@@ -1741,9 +1739,7 @@ CREATE TABLE codeintel_ranking_definitions (
     upload_id integer NOT NULL,
     symbol_name text NOT NULL,
     document_path text NOT NULL,
-    graph_key text NOT NULL,
-    last_scanned_at timestamp with time zone,
-    deleted_at timestamp with time zone
+    graph_key text NOT NULL
 );
 
 CREATE SEQUENCE codeintel_ranking_definitions_id_seq
@@ -1759,7 +1755,9 @@ CREATE TABLE codeintel_ranking_exports (
     upload_id integer,
     graph_key text NOT NULL,
     locked_at timestamp with time zone DEFAULT now() NOT NULL,
-    id integer NOT NULL
+    id integer NOT NULL,
+    last_scanned_at timestamp with time zone,
+    deleted_at timestamp with time zone
 );
 
 CREATE SEQUENCE codeintel_ranking_exports_id_seq
@@ -1816,9 +1814,7 @@ CREATE TABLE codeintel_ranking_references (
     id bigint NOT NULL,
     upload_id integer NOT NULL,
     symbol_names text[] NOT NULL,
-    graph_key text NOT NULL,
-    last_scanned_at timestamp with time zone,
-    deleted_at timestamp with time zone
+    graph_key text NOT NULL
 );
 
 COMMENT ON TABLE codeintel_ranking_references IS 'References for a given upload proceduced by background job consuming SCIP indexes.';
@@ -5467,8 +5463,6 @@ CREATE UNIQUE INDEX codeintel_autoindex_queue_repository_id_commit ON codeintel_
 
 CREATE INDEX codeintel_initial_path_ranks_graph_key_id ON codeintel_initial_path_ranks USING btree (graph_key, id);
 
-CREATE INDEX codeintel_initial_path_ranks_graph_key_last_scanned_at ON codeintel_initial_path_ranks USING btree (graph_key, last_scanned_at NULLS FIRST, id);
-
 CREATE UNIQUE INDEX codeintel_initial_path_ranks_processed_cgraph_key_codeintel_ini ON codeintel_initial_path_ranks_processed USING btree (graph_key, codeintel_initial_path_ranks_id);
 
 CREATE INDEX codeintel_initial_path_upload_id ON codeintel_initial_path_ranks USING btree (upload_id);
@@ -5481,9 +5475,9 @@ CREATE UNIQUE INDEX codeintel_path_ranks_graph_key_repository_id ON codeintel_pa
 
 CREATE INDEX codeintel_path_ranks_repository_id_updated_at_id ON codeintel_path_ranks USING btree (repository_id, updated_at NULLS FIRST, id);
 
-CREATE INDEX codeintel_ranking_definitions_graph_key_last_scanned_at_id ON codeintel_ranking_definitions USING btree (graph_key, last_scanned_at NULLS FIRST, id);
-
 CREATE INDEX codeintel_ranking_definitions_graph_key_symbol_search ON codeintel_ranking_definitions USING btree (graph_key, symbol_name, upload_id, document_path);
+
+CREATE INDEX codeintel_ranking_exports_graph_key_last_scanned_at ON codeintel_ranking_exports USING btree (graph_key, last_scanned_at NULLS FIRST, id);
 
 CREATE UNIQUE INDEX codeintel_ranking_exports_graph_key_upload_id ON codeintel_ranking_exports USING btree (graph_key, upload_id);
 
@@ -5492,8 +5486,6 @@ CREATE INDEX codeintel_ranking_path_counts_inputs_graph_key_id ON codeintel_rank
 CREATE INDEX codeintel_ranking_path_counts_inputs_graph_key_repository_id_id ON codeintel_ranking_path_counts_inputs USING btree (graph_key, repository_id, id) WHERE (NOT processed);
 
 CREATE INDEX codeintel_ranking_references_graph_key_id ON codeintel_ranking_references USING btree (graph_key, id);
-
-CREATE INDEX codeintel_ranking_references_graph_key_last_scanned_at_id ON codeintel_ranking_references USING btree (graph_key, last_scanned_at NULLS FIRST, id);
 
 CREATE UNIQUE INDEX codeintel_ranking_references_processed_graph_key_codeintel_rank ON codeintel_ranking_references_processed USING btree (graph_key, codeintel_ranking_reference_id);
 
