@@ -95,7 +95,7 @@ func newClient(url string) *client {
 	}
 }
 
-func (c *client) search(args embeddings.EmbeddingsSearchParameters) (*embeddings.EmbeddingSearchResults, error) {
+func (c *client) search(args embeddings.EmbeddingsSearchParameters) (*embeddings.EmbeddingCombinedSearchResults, error) {
 	b, err := json.Marshal(args)
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (c *client) search(args embeddings.EmbeddingsSearchParameters) (*embeddings
 		return nil, err
 	}
 
-	res := embeddings.EmbeddingSearchResults{}
+	res := embeddings.EmbeddingCombinedSearchResults{}
 	err = json.Unmarshal(body, &res)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal response")
