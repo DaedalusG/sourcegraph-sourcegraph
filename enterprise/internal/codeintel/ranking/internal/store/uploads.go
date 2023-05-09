@@ -20,8 +20,6 @@ func (s *store) GetUploadsForRanking(ctx context.Context, graphKey, objectPrefix
 		graphKey,
 		batchSize,
 		graphKey,
-		objectPrefix+"/"+graphKey,
-		objectPrefix+"/"+graphKey,
 	)))
 }
 
@@ -55,12 +53,8 @@ WITH candidates AS (
 	FOR UPDATE SKIP LOCKED
 ),
 inserted AS (
-	INSERT INTO codeintel_ranking_exports (upload_id, graph_key, object_prefix)
-	SELECT
-		id,
-		%s,
-		%s || '/' || id
-	FROM candidates
+	INSERT INTO codeintel_ranking_exports (upload_id, graph_key)
+	SELECT id, %s FROM candidates
 	ON CONFLICT (upload_id, graph_key) DO NOTHING
 	RETURNING upload_id AS id
 )
@@ -68,15 +62,14 @@ SELECT
 	c.id,
 	c.repository_name,
 	c.repository_id,
-	c.root,
-	%s || '/' || c.id AS object_prefix
+	c.root
 FROM candidates c
 WHERE c.id IN (SELECT id FROM inserted)
 ORDER BY c.id
 `
 
 var scanUploads = basestore.NewSliceScanner(func(s dbutil.Scanner) (u shared.ExportedUpload, _ error) {
-	err := s.Scan(&u.ID, &u.Repo, &u.RepoID, &u.Root, &u.ObjectPrefix)
+	err := s.Scan(&u.ID, &u.Repo, &u.RepoID, &u.Root)
 	return u, err
 })
 

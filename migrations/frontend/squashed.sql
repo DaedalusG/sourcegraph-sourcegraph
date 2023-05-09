@@ -1759,8 +1759,7 @@ CREATE TABLE codeintel_ranking_exports (
     upload_id integer,
     graph_key text NOT NULL,
     locked_at timestamp with time zone DEFAULT now() NOT NULL,
-    id integer NOT NULL,
-    object_prefix text
+    id integer NOT NULL
 );
 
 CREATE SEQUENCE codeintel_ranking_exports_id_seq
