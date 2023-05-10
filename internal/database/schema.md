@@ -912,16 +912,6 @@ Triggers:
 
 ```
 
-# Table "public.codeintel_ranking_definition_janitor_queue"
-```
-       Column       |  Type   | Collation | Nullable | Default 
---------------------+---------+-----------+----------+---------
- exported_upload_id | integer |           | not null | 
-Indexes:
-    "codeintel_ranking_definition_janitor_que_exported_upload_id_key" UNIQUE CONSTRAINT, btree (exported_upload_id)
-
-```
-
 # Table "public.codeintel_ranking_definitions"
 ```
        Column       |  Type   | Collation | Nullable |                          Default                          
@@ -937,6 +927,16 @@ Indexes:
     "codeintel_ranking_definitions_graph_key_symbol_search" btree (graph_key, symbol_name, exported_upload_id, document_path)
 Foreign-key constraints:
     "codeintel_ranking_definitions_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id)
+
+```
+
+# Table "public.codeintel_ranking_definitions_janitor_queue"
+```
+       Column       |  Type   | Collation | Nullable | Default 
+--------------------+---------+-----------+----------+---------
+ exported_upload_id | integer |           | not null | 
+Indexes:
+    "codeintel_ranking_definitions_janitor_qu_exported_upload_id_key" UNIQUE CONSTRAINT, btree (exported_upload_id)
 
 ```
 

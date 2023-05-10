@@ -118,9 +118,9 @@ END $$;
 CREATE FUNCTION codeintel_ranking_janitor_enqueue() RETURNS trigger
     LANGUAGE plpgsql
     AS $$ BEGIN
-    INSERT INTO codeintel_ranking_export_deletion_logs     (exported_upload_id) SELECT id FROM oldtab;
-    INSERT INTO codeintel_ranking_references_janitor_queue (exported_upload_id) SELECT id FROM oldtab;
-    INSERT INTO codeintel_ranking_paths_janitor_queue      (exported_upload_id) SELECT id FROM oldtab;
+    INSERT INTO codeintel_ranking_definitions_janitor_queue (exported_upload_id) SELECT id FROM oldtab;
+    INSERT INTO codeintel_ranking_references_janitor_queue  (exported_upload_id) SELECT id FROM oldtab;
+    INSERT INTO codeintel_ranking_paths_janitor_queue       (exported_upload_id) SELECT id FROM oldtab;
     RETURN NULL;
 END $$;
 
@@ -1743,10 +1743,6 @@ CREATE SEQUENCE codeintel_path_ranks_id_seq
 
 ALTER SEQUENCE codeintel_path_ranks_id_seq OWNED BY codeintel_path_ranks.id;
 
-CREATE TABLE codeintel_ranking_definition_janitor_queue (
-    exported_upload_id integer NOT NULL
-);
-
 CREATE TABLE codeintel_ranking_definitions (
     id bigint NOT NULL,
     symbol_name text NOT NULL,
@@ -1763,6 +1759,10 @@ CREATE SEQUENCE codeintel_ranking_definitions_id_seq
     CACHE 1;
 
 ALTER SEQUENCE codeintel_ranking_definitions_id_seq OWNED BY codeintel_ranking_definitions.id;
+
+CREATE TABLE codeintel_ranking_definitions_janitor_queue (
+    exported_upload_id integer NOT NULL
+);
 
 CREATE TABLE codeintel_ranking_exports (
     upload_id integer,
@@ -4997,8 +4997,8 @@ ALTER TABLE ONLY codeintel_initial_path_ranks_processed
 ALTER TABLE ONLY codeintel_path_ranks
     ADD CONSTRAINT codeintel_path_ranks_pkey PRIMARY KEY (id);
 
-ALTER TABLE ONLY codeintel_ranking_definition_janitor_queue
-    ADD CONSTRAINT codeintel_ranking_definition_janitor_que_exported_upload_id_key UNIQUE (exported_upload_id);
+ALTER TABLE ONLY codeintel_ranking_definitions_janitor_queue
+    ADD CONSTRAINT codeintel_ranking_definitions_janitor_qu_exported_upload_id_key UNIQUE (exported_upload_id);
 
 ALTER TABLE ONLY codeintel_ranking_definitions
     ADD CONSTRAINT codeintel_ranking_definitions_pkey PRIMARY KEY (id);
