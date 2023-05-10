@@ -7,6 +7,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/sourcegraph/log/logtest"
 
+	rankingshared "github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/ranking/internal/shared"
 	uploadsshared "github.com/sourcegraph/sourcegraph/enterprise/internal/codeintel/uploads/shared"
 	"github.com/sourcegraph/sourcegraph/internal/database"
 	"github.com/sourcegraph/sourcegraph/internal/database/dbtest"
@@ -75,7 +76,39 @@ func TestVacuumAbandonedExportedUploads(t *testing.T) {
 
 	// TODO - setup
 
-	_, err := store.VacuumAbandonedExportedUploads(ctx, mockRankingGraphKey, 100)
+	_, err := store.VacuumAbandonedExportedUploads(ctx, rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123), 100)
+	if err != nil {
+		t.Fatalf("unexpected error vacuuming deleted exported uploads: %s", err)
+	}
+
+	// TODO - assertions
+}
+
+func TestSoftDeleteStaleExportedUploads(t *testing.T) {
+	logger := logtest.Scoped(t)
+	ctx := context.Background()
+	db := database.NewDB(logger, dbtest.NewDB(logger, t))
+	store := New(&observation.TestContext, db)
+
+	// TODO - setup
+
+	_, _, err := store.SoftDeleteStaleExportedUploads(ctx, rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123))
+	if err != nil {
+		t.Fatalf("unexpected error vacuuming deleted exported uploads: %s", err)
+	}
+
+	// TODO - assertions
+}
+
+func TestVacuumDeletedExportedUploads(t *testing.T) {
+	logger := logtest.Scoped(t)
+	ctx := context.Background()
+	db := database.NewDB(logger, dbtest.NewDB(logger, t))
+	store := New(&observation.TestContext, db)
+
+	// TODO - setup
+
+	_, err := store.VacuumDeletedExportedUploads(ctx, rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123))
 	if err != nil {
 		t.Fatalf("unexpected error vacuuming deleted exported uploads: %s", err)
 	}

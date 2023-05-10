@@ -33,10 +33,12 @@ func (s *store) InsertPathCountInputs(
 		insertPathCountInputsQuery,
 		derivativeGraphKey,
 		graphKey,
+		graphKey,
 		derivativeGraphKey,
 		batchSize,
 		derivativeGraphKey,
 		derivativeGraphKey,
+		graphKey,
 		graphKey,
 		graphKey,
 		derivativeGraphKey,
@@ -77,6 +79,7 @@ refs AS (
 		rr.upload_id,
 		rr.symbol_names
 	FROM codeintel_ranking_references rr
+	JOIN codeintel_ranking_exports cre ON cre.graph_key = %s AND cre.upload_id = rr.upload_id
 	JOIN progress p ON TRUE
 	WHERE
 		rr.graph_key = %s AND
@@ -89,7 +92,7 @@ refs AS (
 		-- Ensure that the record is within the bounds where it would be visible
 		-- to the current "snapshot" defined by the ranking computation state row.
 		rr.id <= p.max_reference_id AND
-		(rr.deleted_at IS NULL OR rr.deleted_at > p.started_at) AND
+		(cre.deleted_at IS NULL OR cre.deleted_at > p.started_at) AND
 
 		-- Ensure the record isn't already processed
 		NOT EXISTS (
@@ -156,6 +159,7 @@ referenced_definitions AS (
 		rd.document_path,
 		COUNT(*) AS count
 	FROM codeintel_ranking_definitions rd
+	JOIN codeintel_ranking_exports cre ON cre.graph_key = %s AND cre.upload_id = rd.upload_id
 	JOIN referenced_symbols rs ON rs.symbol_name = rd.symbol_name
 	JOIN lsif_uploads u ON u.id = rd.upload_id
 	JOIN progress p ON TRUE
@@ -165,7 +169,7 @@ referenced_definitions AS (
 		-- Ensure that the record is within the bounds where it would be visible
 		-- to the current "snapshot" defined by the ranking computation state row.
 		rd.id <= p.max_definition_id AND
-		(rd.deleted_at IS NULL OR rd.deleted_at > p.started_at) AND
+		(cre.deleted_at IS NULL OR cre.deleted_at > p.started_at) AND
 
 		-- If there are multiple uploads in the same repository/root/indexer, only
 		-- consider definition records attached to the one with the highest id. This
@@ -229,6 +233,7 @@ func (s *store) InsertInitialPathCounts(
 		insertInitialPathCountsInputsQuery,
 		derivativeGraphKey,
 		graphKey,
+		graphKey,
 		derivativeGraphKey,
 		batchSize,
 		derivativeGraphKey,
@@ -273,6 +278,7 @@ unprocessed_path_counts AS (
 			ELSE ipr.document_paths
 		END AS document_paths
 	FROM codeintel_initial_path_ranks ipr
+	JOIN codeintel_ranking_exports cre ON cre.graph_key = %s AND cre.upload_id = ipr.upload_id
 	JOIN progress p ON TRUE
 	WHERE
 		ipr.graph_key = %s AND
@@ -284,7 +290,7 @@ unprocessed_path_counts AS (
 		-- Ensure that the record is within the bounds where it would be visible
 		-- to the current "snapshot" defined by the ranking computation state row.
 		ipr.id <= p.max_path_id AND
-		(ipr.deleted_at IS NULL OR ipr.deleted_at > p.started_at) AND
+		(cre.deleted_at IS NULL OR cre.deleted_at > p.started_at) AND
 
 		-- Ensure the record isn't already processed
 		NOT EXISTS (

@@ -28,9 +28,12 @@ func TestInsertPathCountInputs(t *testing.T) {
 	db := database.NewDB(logger, dbtest.NewDB(logger, t))
 	store := New(&observation.TestContext, db)
 
+	key := rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123)
+
 	t1 := time.Now().Add(-time.Minute * 10)
 	t2 := time.Now().Add(-time.Minute * 20)
 
+	// Insert and export uploads
 	insertUploads(t, db,
 		uploadsshared.Upload{ID: 42, RepositoryID: 50},
 		uploadsshared.Upload{ID: 43, RepositoryID: 51},
@@ -40,6 +43,15 @@ func TestInsertPathCountInputs(t *testing.T) {
 		uploadsshared.Upload{ID: 93, RepositoryID: 54, Root: "lib/", Indexer: "test"},
 		uploadsshared.Upload{ID: 94, RepositoryID: 54, Root: "lib/", Indexer: "test"},
 	)
+	if _, err := db.ExecContext(ctx, `
+		WITH v AS (SELECT unnest('{42, 43, 90, 91, 92, 93, 94}'::integer[]))
+		INSERT INTO codeintel_ranking_exports (graph_key, upload_id)
+		SELECT $1, id FROM v AS v(id)
+	`,
+		mockRankingGraphKey,
+	); err != nil {
+		t.Fatalf("failed to insert exported upload: %s", err)
+	}
 
 	// Insert definitions
 	mockDefinitions := make(chan shared.RankingDefinitions, 4)
@@ -73,7 +85,7 @@ func TestInsertPathCountInputs(t *testing.T) {
 		INSERT INTO codeintel_ranking_progress(graph_key, max_definition_id, max_reference_id, max_path_id, mappers_started_at)
 		VALUES ($1,  1000, 1000, 1000, NOW())
 	`,
-		rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123),
+		key,
 	); err != nil {
 		t.Fatalf("failed to insert metadata: %s", err)
 	}
@@ -89,7 +101,7 @@ func TestInsertPathCountInputs(t *testing.T) {
 		t.Fatalf("unexpected error inserting references: %s", err)
 	}
 
-	if _, _, err := store.InsertPathCountInputs(ctx, rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123), 1000); err != nil {
+	if _, _, err := store.InsertPathCountInputs(ctx, key, 1000); err != nil {
 		t.Fatalf("unexpected error inserting path count inputs: %s", err)
 	}
 
@@ -120,7 +132,7 @@ func TestInsertPathCountInputs(t *testing.T) {
 	}
 
 	// Test InsertPathCountInputs: should process existing rows
-	if _, _, err := store.InsertPathCountInputs(ctx, rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123), 1000); err != nil {
+	if _, _, err := store.InsertPathCountInputs(ctx, key, 1000); err != nil {
 		t.Fatalf("unexpected error inserting path count inputs: %s", err)
 	}
 
@@ -136,7 +148,7 @@ func TestInsertPathCountInputs(t *testing.T) {
 	}
 
 	// Test InsertPathCountInputs: should process unprocessed rows only
-	if _, _, err := store.InsertPathCountInputs(ctx, rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123), 1000); err != nil {
+	if _, _, err := store.InsertPathCountInputs(ctx, key, 1000); err != nil {
 		t.Fatalf("unexpected error inserting path count inputs: %s", err)
 	}
 
@@ -154,7 +166,7 @@ func TestInsertPathCountInputs(t *testing.T) {
 	}
 
 	// Test InsertPathCountInputs: should do nothing, 94 covers the same project as 93
-	if _, _, err := store.InsertPathCountInputs(ctx, rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123), 1000); err != nil {
+	if _, _, err := store.InsertPathCountInputs(ctx, key, 1000); err != nil {
 		t.Fatalf("unexpected error inserting path count inputs: %s", err)
 	}
 
@@ -188,15 +200,26 @@ func TestInsertInitialPathCounts(t *testing.T) {
 	db := database.NewDB(logger, dbtest.NewDB(logger, t))
 	store := New(&observation.TestContext, db)
 
-	// Creates repository 50
+	key := rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123)
+
+	// Insert and export upload
+	// N.B. This creates repository 50 implicitly
 	insertUploads(t, db, uploadsshared.Upload{ID: 1})
+	if _, err := db.ExecContext(ctx, `
+		INSERT INTO codeintel_ranking_exports (graph_key, upload_id)
+		VALUES ($1,  1)
+	`,
+		mockRankingGraphKey,
+	); err != nil {
+		t.Fatalf("failed to insert exported upload: %s", err)
+	}
 
 	// Insert metadata to trigger mapper
 	if _, err := db.ExecContext(ctx, `
 		INSERT INTO codeintel_ranking_progress(graph_key, max_definition_id, max_reference_id, max_path_id, mappers_started_at)
 		VALUES ($1,  1000, 1000, 1000, NOW())
 	`,
-		rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123),
+		key,
 	); err != nil {
 		t.Fatalf("failed to insert metadata: %s", err)
 	}
@@ -211,7 +234,7 @@ func TestInsertInitialPathCounts(t *testing.T) {
 		t.Fatalf("unexpected error inserting initial path counts: %s", err)
 	}
 
-	if _, _, err := store.InsertInitialPathCounts(ctx, rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123), 1000); err != nil {
+	if _, _, err := store.InsertInitialPathCounts(ctx, key, 1000); err != nil {
 		t.Fatalf("unexpected error inserting initial path counts: %s", err)
 	}
 
@@ -235,6 +258,8 @@ func TestVacuumStaleGraphs(t *testing.T) {
 	ctx := context.Background()
 	db := database.NewDB(logger, dbtest.NewDB(logger, t))
 	store := New(&observation.TestContext, db)
+
+	key := rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123)
 
 	mockReferences := make(chan string, 2)
 	mockReferences <- "foo"
@@ -262,7 +287,7 @@ func TestVacuumStaleGraphs(t *testing.T) {
 	}
 
 	for _, graphKey := range []string{
-		rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 123),
+		key,
 		rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 456),
 		rankingshared.NewDerivativeGraphKeyKey(mockRankingGraphKey, "", 789),
 	} {
