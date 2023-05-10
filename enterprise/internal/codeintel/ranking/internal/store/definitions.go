@@ -19,7 +19,7 @@ func (s *store) InsertDefinitionsForRanking(
 	return s.withTransaction(ctx, func(tx *store) error {
 		inserter := func(inserter *batch.Inserter) error {
 			for definition := range definitions {
-				if err := inserter.Insert(ctx, definition.UploadID, definition.SymbolName, definition.DocumentPath, rankingGraphKey); err != nil {
+				if err := inserter.Insert(ctx, definition.ExportedUploadID, definition.SymbolName, definition.DocumentPath, rankingGraphKey); err != nil {
 					return err
 				}
 			}
@@ -33,7 +33,7 @@ func (s *store) InsertDefinitionsForRanking(
 			"codeintel_ranking_definitions",
 			batch.MaxNumPostgresParameters,
 			[]string{
-				"upload_id",
+				"exported_upload_id",
 				"symbol_name",
 				"document_path",
 				"graph_key",

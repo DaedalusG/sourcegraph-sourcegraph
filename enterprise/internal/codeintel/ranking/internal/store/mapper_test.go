@@ -97,7 +97,7 @@ func TestInsertPathCountInputs(t *testing.T) {
 	mockReferences <- "foo"
 	mockReferences <- "bar"
 	close(mockReferences)
-	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 90, mockReferences); err != nil {
+	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 90, 90, mockReferences); err != nil {
 		t.Fatalf("unexpected error inserting references: %s", err)
 	}
 
@@ -109,14 +109,14 @@ func TestInsertPathCountInputs(t *testing.T) {
 	mockReferences = make(chan string, 1)
 	mockReferences <- "baz"
 	close(mockReferences)
-	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 90, mockReferences); err != nil {
+	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 90, 90, mockReferences); err != nil {
 		t.Fatalf("unexpected error inserting references: %s", err)
 	}
 
 	mockReferences = make(chan string, 1)
 	mockReferences <- "bonk"
 	close(mockReferences)
-	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 91, mockReferences); err != nil {
+	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 91, 91, mockReferences); err != nil {
 		t.Fatalf("unexpected error inserting references: %s", err)
 	}
 
@@ -127,7 +127,7 @@ func TestInsertPathCountInputs(t *testing.T) {
 	mockReferences <- "baz"
 	mockReferences <- "bonk"
 	close(mockReferences)
-	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 92, mockReferences); err != nil {
+	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 92, 92, mockReferences); err != nil {
 		t.Fatalf("unexpected error inserting references: %s", err)
 	}
 
@@ -143,7 +143,7 @@ func TestInsertPathCountInputs(t *testing.T) {
 	mockReferences <- "foo"
 	mockReferences <- "bar"
 	close(mockReferences)
-	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 93, mockReferences); err != nil {
+	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 93, 93, mockReferences); err != nil {
 		t.Fatalf("unexpected error inserting references: %s", err)
 	}
 
@@ -161,7 +161,7 @@ func TestInsertPathCountInputs(t *testing.T) {
 	mockReferences <- "baz"
 	mockReferences <- "bonk"
 	close(mockReferences)
-	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 94, mockReferences); err != nil {
+	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 94, 94, mockReferences); err != nil {
 		t.Fatalf("unexpected error inserting references: %s", err)
 	}
 
@@ -230,7 +230,7 @@ func TestInsertInitialPathCounts(t *testing.T) {
 	mockPathNames <- "bar.go"
 	mockPathNames <- "baz.go"
 	close(mockPathNames)
-	if err := store.InsertInitialPathRanks(ctx, mockUploadID, mockPathNames, 2, mockRankingGraphKey); err != nil {
+	if err := store.InsertInitialPathRanks(ctx, mockUploadID, mockUploadID, mockPathNames, 2, mockRankingGraphKey); err != nil {
 		t.Fatalf("unexpected error inserting initial path counts: %s", err)
 	}
 
@@ -265,7 +265,7 @@ func TestVacuumStaleGraphs(t *testing.T) {
 	mockReferences <- "foo"
 	mockReferences <- "bar"
 	close(mockReferences)
-	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 1, mockReferences); err != nil {
+	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 1, 1, mockReferences); err != nil {
 		t.Fatalf("unexpected error inserting references: %s", err)
 	}
 
@@ -274,7 +274,7 @@ func TestVacuumStaleGraphs(t *testing.T) {
 	mockReferences <- "bar"
 	mockReferences <- "baz"
 	close(mockReferences)
-	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 2, mockReferences); err != nil {
+	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 2, 2, mockReferences); err != nil {
 		t.Fatalf("unexpected error inserting references: %s", err)
 	}
 
@@ -282,7 +282,7 @@ func TestVacuumStaleGraphs(t *testing.T) {
 	mockReferences <- "bar"
 	mockReferences <- "baz"
 	close(mockReferences)
-	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 3, mockReferences); err != nil {
+	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 3, 3, mockReferences); err != nil {
 		t.Fatalf("unexpected error inserting references: %s", err)
 	}
 

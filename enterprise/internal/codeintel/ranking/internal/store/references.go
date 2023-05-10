@@ -13,7 +13,8 @@ func (s *store) InsertReferencesForRanking(
 	ctx context.Context,
 	rankingGraphKey string,
 	batchSize int,
-	uploadID int,
+	uploadID int, // TODO - can remove
+	exportedUploadID int,
 	references chan string,
 ) (err error) {
 	ctx, _, endObservation := s.operations.insertReferencesForRanking.With(ctx, &err, observation.Args{})
@@ -22,7 +23,7 @@ func (s *store) InsertReferencesForRanking(
 	return s.withTransaction(ctx, func(tx *store) error {
 		inserter := func(inserter *batch.Inserter) error {
 			for symbols := range batchChannel(references, batchSize) {
-				if err := inserter.Insert(ctx, uploadID, pq.Array(symbols), rankingGraphKey); err != nil {
+				if err := inserter.Insert(ctx, exportedUploadID, pq.Array(symbols), rankingGraphKey); err != nil {
 					return err
 				}
 			}
@@ -35,7 +36,11 @@ func (s *store) InsertReferencesForRanking(
 			tx.db.Handle(),
 			"codeintel_ranking_references",
 			batch.MaxNumPostgresParameters,
-			[]string{"upload_id", "symbol_names", "graph_key"},
+			[]string{
+				"exported_upload_id",
+				"symbol_names",
+				"graph_key",
+			},
 			inserter,
 		); err != nil {
 			return err

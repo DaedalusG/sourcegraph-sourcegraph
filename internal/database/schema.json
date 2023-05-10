@@ -63,6 +63,10 @@
       "Definition": "CREATE OR REPLACE FUNCTION public.changesets_computed_state_ensure()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$ BEGIN\n\n    NEW.computed_state = CASE\n        WHEN NEW.reconciler_state = 'errored' THEN 'RETRYING'\n        WHEN NEW.reconciler_state = 'failed' THEN 'FAILED'\n        WHEN NEW.reconciler_state = 'scheduled' THEN 'SCHEDULED'\n        WHEN NEW.reconciler_state != 'completed' THEN 'PROCESSING'\n        WHEN NEW.publication_state = 'UNPUBLISHED' THEN 'UNPUBLISHED'\n        ELSE NEW.external_state\n    END AS computed_state;\n\n    RETURN NEW;\nEND $function$\n"
     },
     {
+      "Name": "codeintel_ranking_janitor_enqueue",
+      "Definition": "CREATE OR REPLACE FUNCTION public.codeintel_ranking_janitor_enqueue()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$ BEGIN\n    INSERT INTO codeintel_ranking_export_deletion_logs     (exported_upload_id) SELECT id FROM oldtab;\n    INSERT INTO codeintel_ranking_references_janitor_queue (exported_upload_id) SELECT id FROM oldtab;\n    INSERT INTO codeintel_ranking_paths_janitor_queue      (exported_upload_id) SELECT id FROM oldtab;\n    RETURN NULL;\nEND $function$\n"
+    },
+    {
       "Name": "delete_batch_change_reference_on_changesets",
       "Definition": "CREATE OR REPLACE FUNCTION public.delete_batch_change_reference_on_changesets()\n RETURNS trigger\n LANGUAGE plpgsql\nAS $function$\n    BEGIN\n        UPDATE\n          changesets\n        SET\n          batch_change_ids = changesets.batch_change_ids - OLD.id::text\n        WHERE\n          changesets.batch_change_ids ? OLD.id::text;\n\n        RETURN OLD;\n    END;\n$function$\n"
     },
@@ -7192,6 +7196,19 @@
           "Comment": ""
         },
         {
+          "Name": "exported_upload_id",
+          "Index": 8,
+          "TypeName": "integer",
+          "IsNullable": false,
+          "Default": "",
+          "CharacterMaximumLength": 0,
+          "IsIdentity": false,
+          "IdentityGeneration": "",
+          "IsGenerated": "NEVER",
+          "GenerationExpression": "",
+          "Comment": ""
+        },
+        {
           "Name": "graph_key",
           "Index": 4,
           "TypeName": "text",
@@ -7216,19 +7233,6 @@
           "IsGenerated": "NEVER",
           "GenerationExpression": "",
           "Comment": ""
-        },
-        {
-          "Name": "upload_id",
-          "Index": 2,
-          "TypeName": "integer",
-          "IsNullable": false,
-          "Default": "",
-          "CharacterMaximumLength": 0,
-          "IsIdentity": false,
-          "IdentityGeneration": "",
-          "IsGenerated": "NEVER",
-          "GenerationExpression": "",
-          "Comment": ""
         }
       ],
       "Indexes": [
@@ -7243,6 +7247,16 @@
           "ConstraintDefinition": "PRIMARY KEY (id)"
         },
         {
+          "Name": "codeintel_initial_path_ranks_exported_upload_id",
+          "IsPrimaryKey": false,
+          "IsUnique": false,
+          "IsExclusion": false,
+          "IsDeferrable": false,
+          "IndexDefinition": "CREATE INDEX codeintel_initial_path_ranks_exported_upload_id ON codeintel_initial_path_ranks USING btree (exported_upload_id)",
+          "ConstraintType": "",
+          "ConstraintDefinition": ""
+        },
+        {
           "Name": "codeintel_initial_path_ranks_graph_key_id",
           "IsPrimaryKey": false,
           "IsUnique": false,
@@ -7251,19 +7265,17 @@
           "IndexDefinition": "CREATE INDEX codeintel_initial_path_ranks_graph_key_id ON codeintel_initial_path_ranks USING btree (graph_key, id)",
           "ConstraintType": "",
           "ConstraintDefinition": ""
-        },
-        {
-          "Name": "codeintel_initial_path_upload_id",
-          "IsPrimaryKey": false,
-          "IsUnique": false,
-          "IsExclusion": false,
-          "IsDeferrable": false,
-          "IndexDefinition": "CREATE INDEX codeintel_initial_path_upload_id ON codeintel_initial_path_ranks USING btree (upload_id)",
-          "ConstraintType": "",
-          "ConstraintDefinition": ""
         }
       ],
-      "Constraints": null,
+      "Constraints": [
+        {
+          "Name": "codeintel_initial_path_ranks_exported_upload_id_fkey",
+          "ConstraintType": "f",
+          "RefTableName": "codeintel_ranking_exports",
+          "IsDeferrable": false,
+          "ConstraintDefinition": "FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id)"
+        }
+      ],
       "Triggers": []
     },
     {
@@ -7557,6 +7569,39 @@
       ]
     },
     {
+      "Name": "codeintel_ranking_definition_janitor_queue",
+      "Comment": "",
+      "Columns": [
+        {
+          "Name": "exported_upload_id",
+          "Index": 1,
+          "TypeName": "integer",
+          "IsNullable": false,
+          "Default": "",
+          "CharacterMaximumLength": 0,
+          "IsIdentity": false,
+          "IdentityGeneration": "",
+          "IsGenerated": "NEVER",
+          "GenerationExpression": "",
+          "Comment": ""
+        }
+      ],
+      "Indexes": [
+        {
+          "Name": "codeintel_ranking_definition_janitor_que_exported_upload_id_key",
+          "IsPrimaryKey": false,
+          "IsUnique": true,
+          "IsExclusion": false,
+          "IsDeferrable": false,
+          "IndexDefinition": "CREATE UNIQUE INDEX codeintel_ranking_definition_janitor_que_exported_upload_id_key ON codeintel_ranking_definition_janitor_queue USING btree (exported_upload_id)",
+          "ConstraintType": "u",
+          "ConstraintDefinition": "UNIQUE (exported_upload_id)"
+        }
+      ],
+      "Constraints": null,
+      "Triggers": []
+    },
+    {
       "Name": "codeintel_ranking_definitions",
       "Comment": "",
       "Columns": [
@@ -7564,6 +7609,19 @@
           "Name": "document_path",
           "Index": 5,
           "TypeName": "text",
+          "IsNullable": false,
+          "Default": "",
+          "CharacterMaximumLength": 0,
+          "IsIdentity": false,
+          "IdentityGeneration": "",
+          "IsGenerated": "NEVER",
+          "GenerationExpression": "",
+          "Comment": ""
+        },
+        {
+          "Name": "exported_upload_id",
+          "Index": 9,
+          "TypeName": "integer",
           "IsNullable": false,
           "Default": "",
           "CharacterMaximumLength": 0,
@@ -7611,19 +7669,6 @@
           "IsGenerated": "NEVER",
           "GenerationExpression": "",
           "Comment": ""
-        },
-        {
-          "Name": "upload_id",
-          "Index": 2,
-          "TypeName": "integer",
-          "IsNullable": false,
-          "Default": "",
-          "CharacterMaximumLength": 0,
-          "IsIdentity": false,
-          "IdentityGeneration": "",
-          "IsGenerated": "NEVER",
-          "GenerationExpression": "",
-          "Comment": ""
         }
       ],
       "Indexes": [
@@ -7638,17 +7683,35 @@
           "ConstraintDefinition": "PRIMARY KEY (id)"
         },
         {
+          "Name": "codeintel_ranking_definitions_exported_upload_id",
+          "IsPrimaryKey": false,
+          "IsUnique": false,
+          "IsExclusion": false,
+          "IsDeferrable": false,
+          "IndexDefinition": "CREATE INDEX codeintel_ranking_definitions_exported_upload_id ON codeintel_ranking_definitions USING btree (exported_upload_id)",
+          "ConstraintType": "",
+          "ConstraintDefinition": ""
+        },
+        {
           "Name": "codeintel_ranking_definitions_graph_key_symbol_search",
           "IsPrimaryKey": false,
           "IsUnique": false,
           "IsExclusion": false,
           "IsDeferrable": false,
-          "IndexDefinition": "CREATE INDEX codeintel_ranking_definitions_graph_key_symbol_search ON codeintel_ranking_definitions USING btree (graph_key, symbol_name, upload_id, document_path)",
+          "IndexDefinition": "CREATE INDEX codeintel_ranking_definitions_graph_key_symbol_search ON codeintel_ranking_definitions USING btree (graph_key, symbol_name, exported_upload_id, document_path)",
           "ConstraintType": "",
           "ConstraintDefinition": ""
         }
       ],
-      "Constraints": null,
+      "Constraints": [
+        {
+          "Name": "codeintel_ranking_definitions_exported_upload_id_fkey",
+          "ConstraintType": "f",
+          "RefTableName": "codeintel_ranking_exports",
+          "IsDeferrable": false,
+          "ConstraintDefinition": "FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id)"
+        }
+      ],
       "Triggers": []
     },
     {
@@ -7775,7 +7838,12 @@
           "ConstraintDefinition": "FOREIGN KEY (upload_id) REFERENCES lsif_uploads(id) ON DELETE SET NULL"
         }
       ],
-      "Triggers": []
+      "Triggers": [
+        {
+          "Name": "codeintel_ranking_exports_delete",
+          "Definition": "CREATE TRIGGER codeintel_ranking_exports_delete AFTER DELETE ON codeintel_ranking_exports REFERENCING OLD TABLE AS oldtab FOR EACH STATEMENT EXECUTE FUNCTION codeintel_ranking_janitor_enqueue()"
+        }
+      ]
     },
     {
       "Name": "codeintel_ranking_path_counts_inputs",
@@ -7890,6 +7958,39 @@
           "IndexDefinition": "CREATE INDEX codeintel_ranking_path_counts_inputs_graph_key_repository_id_id ON codeintel_ranking_path_counts_inputs USING btree (graph_key, repository_id, id) WHERE NOT processed",
           "ConstraintType": "",
           "ConstraintDefinition": ""
+        }
+      ],
+      "Constraints": null,
+      "Triggers": []
+    },
+    {
+      "Name": "codeintel_ranking_paths_janitor_queue",
+      "Comment": "",
+      "Columns": [
+        {
+          "Name": "exported_upload_id",
+          "Index": 1,
+          "TypeName": "integer",
+          "IsNullable": false,
+          "Default": "",
+          "CharacterMaximumLength": 0,
+          "IsIdentity": false,
+          "IdentityGeneration": "",
+          "IsGenerated": "NEVER",
+          "GenerationExpression": "",
+          "Comment": ""
+        }
+      ],
+      "Indexes": [
+        {
+          "Name": "codeintel_ranking_paths_janitor_queue_exported_upload_id_key",
+          "IsPrimaryKey": false,
+          "IsUnique": true,
+          "IsExclusion": false,
+          "IsDeferrable": false,
+          "IndexDefinition": "CREATE UNIQUE INDEX codeintel_ranking_paths_janitor_queue_exported_upload_id_key ON codeintel_ranking_paths_janitor_queue USING btree (exported_upload_id)",
+          "ConstraintType": "u",
+          "ConstraintDefinition": "UNIQUE (exported_upload_id)"
         }
       ],
       "Constraints": null,
@@ -8060,6 +8161,19 @@
       "Comment": "References for a given upload proceduced by background job consuming SCIP indexes.",
       "Columns": [
         {
+          "Name": "exported_upload_id",
+          "Index": 8,
+          "TypeName": "integer",
+          "IsNullable": false,
+          "Default": "",
+          "CharacterMaximumLength": 0,
+          "IsIdentity": false,
+          "IdentityGeneration": "",
+          "IsGenerated": "NEVER",
+          "GenerationExpression": "",
+          "Comment": ""
+        },
+        {
           "Name": "graph_key",
           "Index": 4,
           "TypeName": "text",
@@ -8097,19 +8211,6 @@
           "IsGenerated": "NEVER",
           "GenerationExpression": "",
           "Comment": ""
-        },
-        {
-          "Name": "upload_id",
-          "Index": 2,
-          "TypeName": "integer",
-          "IsNullable": false,
-          "Default": "",
-          "CharacterMaximumLength": 0,
-          "IsIdentity": false,
-          "IdentityGeneration": "",
-          "IsGenerated": "NEVER",
-          "GenerationExpression": "",
-          "Comment": ""
         }
       ],
       "Indexes": [
@@ -8124,6 +8225,16 @@
           "ConstraintDefinition": "PRIMARY KEY (id)"
         },
         {
+          "Name": "codeintel_ranking_references_exported_upload_id",
+          "IsPrimaryKey": false,
+          "IsUnique": false,
+          "IsExclusion": false,
+          "IsDeferrable": false,
+          "IndexDefinition": "CREATE INDEX codeintel_ranking_references_exported_upload_id ON codeintel_ranking_references USING btree (exported_upload_id)",
+          "ConstraintType": "",
+          "ConstraintDefinition": ""
+        },
+        {
           "Name": "codeintel_ranking_references_graph_key_id",
           "IsPrimaryKey": false,
           "IsUnique": false,
@@ -8132,16 +8243,47 @@
           "IndexDefinition": "CREATE INDEX codeintel_ranking_references_graph_key_id ON codeintel_ranking_references USING btree (graph_key, id)",
           "ConstraintType": "",
           "ConstraintDefinition": ""
-        },
+        }
+      ],
+      "Constraints": [
         {
-          "Name": "codeintel_ranking_references_upload_id",
+          "Name": "codeintel_ranking_references_exported_upload_id_fkey",
+          "ConstraintType": "f",
+          "RefTableName": "codeintel_ranking_exports",
+          "IsDeferrable": false,
+          "ConstraintDefinition": "FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id)"
+        }
+      ],
+      "Triggers": []
+    },
+    {
+      "Name": "codeintel_ranking_references_janitor_queue",
+      "Comment": "",
+      "Columns": [
+        {
+          "Name": "exported_upload_id",
+          "Index": 1,
+          "TypeName": "integer",
+          "IsNullable": false,
+          "Default": "",
+          "CharacterMaximumLength": 0,
+          "IsIdentity": false,
+          "IdentityGeneration": "",
+          "IsGenerated": "NEVER",
+          "GenerationExpression": "",
+          "Comment": ""
+        }
+      ],
+      "Indexes": [
+        {
+          "Name": "codeintel_ranking_references_janitor_que_exported_upload_id_key",
           "IsPrimaryKey": false,
-          "IsUnique": false,
+          "IsUnique": true,
           "IsExclusion": false,
           "IsDeferrable": false,
-          "IndexDefinition": "CREATE INDEX codeintel_ranking_references_upload_id ON codeintel_ranking_references USING btree (upload_id)",
-          "ConstraintType": "",
-          "ConstraintDefinition": ""
+          "IndexDefinition": "CREATE UNIQUE INDEX codeintel_ranking_references_janitor_que_exported_upload_id_key ON codeintel_ranking_references_janitor_queue USING btree (exported_upload_id)",
+          "ConstraintType": "u",
+          "ConstraintDefinition": "UNIQUE (exported_upload_id)"
         }
       ],
       "Constraints": null,

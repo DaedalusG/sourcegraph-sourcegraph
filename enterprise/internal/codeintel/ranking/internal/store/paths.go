@@ -11,7 +11,8 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 )
 
-func (s *store) InsertInitialPathRanks(ctx context.Context, uploadID int, documentPaths chan string, batchSize int, graphKey string) (err error) {
+// TODO - can remove uploadID
+func (s *store) InsertInitialPathRanks(ctx context.Context, uploadID, exportedUploadID int, documentPaths chan string, batchSize int, graphKey string) (err error) {
 	ctx, _, endObservation := s.operations.insertInitialPathRanks.With(ctx, &err, observation.Args{LogFields: []otlog.Field{
 		otlog.String("graphKey", graphKey),
 	}})
@@ -43,7 +44,7 @@ func (s *store) InsertInitialPathRanks(ctx context.Context, uploadID int, docume
 			return err
 		}
 
-		if err = tx.db.Exec(ctx, sqlf.Sprintf(insertInitialPathRankCountsQuery, uploadID, graphKey)); err != nil {
+		if err = tx.db.Exec(ctx, sqlf.Sprintf(insertInitialPathRankCountsQuery, exportedUploadID, graphKey)); err != nil {
 			return err
 		}
 
@@ -59,6 +60,6 @@ ON COMMIT DROP
 `
 
 const insertInitialPathRankCountsQuery = `
-INSERT INTO codeintel_initial_path_ranks (upload_id, document_paths, graph_key)
+INSERT INTO codeintel_initial_path_ranks (exported_upload_id, document_paths, graph_key)
 SELECT %s, document_paths, %s FROM t_codeintel_initial_path_ranks
 `

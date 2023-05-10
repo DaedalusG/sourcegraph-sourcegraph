@@ -33,7 +33,6 @@ func (s *store) InsertPathCountInputs(
 		insertPathCountInputsQuery,
 		derivativeGraphKey,
 		graphKey,
-		graphKey,
 		derivativeGraphKey,
 		batchSize,
 		derivativeGraphKey,
@@ -74,10 +73,10 @@ progress AS (
 refs AS (
 	SELECT
 		rr.id,
-		rr.upload_id,
+		cre.upload_id,
 		rr.symbol_names
 	FROM codeintel_ranking_references rr
-	JOIN codeintel_ranking_exports cre ON cre.graph_key = %s AND cre.upload_id = rr.upload_id
+	JOIN codeintel_ranking_exports cre ON cre.id = rr.exported_upload_id
 	JOIN progress p ON TRUE
 	WHERE
 		rr.graph_key = %s AND
@@ -122,7 +121,8 @@ processable_symbols AS (
 		NOT EXISTS (
 			SELECT 1
 			FROM lsif_uploads u2
-			JOIN codeintel_ranking_references rr ON rr.upload_id = u2.id
+			JOIN codeintel_ranking_exports cre ON cre.id = u2.id
+			JOIN codeintel_ranking_references rr ON rr.exported_upload_id = cre.upload_id
 			JOIN codeintel_ranking_references_processed rrp ON rrp.codeintel_ranking_reference_id = rr.id
 			WHERE
 				rrp.graph_key = %s AND
@@ -169,9 +169,9 @@ referenced_definitions AS (
 				ORDER BY u.id DESC
 			) AS rank
 		FROM codeintel_ranking_definitions rd
-		JOIN codeintel_ranking_exports cre ON cre.graph_key = rd.graph_key AND cre.upload_id = rd.upload_id
+		JOIN codeintel_ranking_exports cre ON cre.id = rd.exported_upload_id
 		JOIN referenced_symbols rs ON rs.symbol_name = rd.symbol_name
-		JOIN lsif_uploads u ON u.id = rd.upload_id
+		JOIN lsif_uploads u ON u.id = cre.upload_id
 		JOIN progress p ON TRUE
 		WHERE
 			rd.graph_key = %s AND

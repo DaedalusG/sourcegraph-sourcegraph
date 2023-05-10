@@ -38,5 +38,8 @@ func NewSymbolJanitor(observationCtx *observation.Context, store store.Store, co
 		janitor.NewAbandonedExportedUploadsJanitor(observationCtx, store, config),
 		janitor.NewRankCountsJanitor(observationCtx, store, config),
 		janitor.NewRankJanitor(observationCtx, store, config),
+		janitor.NewOrphanedDefinitionsJanitor(observationCtx, store, config),
+		janitor.NewOrphanedReferencesJanitor(observationCtx, store, config),
+		janitor.NewOrphanedPathsJanitor(observationCtx, store, config),
 	}
 }

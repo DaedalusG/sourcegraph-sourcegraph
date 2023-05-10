@@ -30,7 +30,7 @@ func TestInsertInitialPathRanks(t *testing.T) {
 	mockPathNames <- "bar.go"
 	mockPathNames <- "baz.go"
 	close(mockPathNames)
-	if err := store.InsertInitialPathRanks(ctx, mockUploadID, mockPathNames, 2, mockRankingGraphKey); err != nil {
+	if err := store.InsertInitialPathRanks(ctx, mockUploadID, mockUploadID, mockPathNames, 2, mockRankingGraphKey); err != nil {
 		t.Fatalf("unexpected error inserting initial path counts: %s", err)
 	}
 
