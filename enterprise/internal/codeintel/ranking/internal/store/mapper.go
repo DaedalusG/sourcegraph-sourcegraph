@@ -39,8 +39,6 @@ func (s *store) InsertPathCountInputs(
 		derivativeGraphKey,
 		derivativeGraphKey,
 		graphKey,
-		graphKey,
-		graphKey,
 		derivativeGraphKey,
 	))
 	if err != nil {
@@ -159,7 +157,7 @@ referenced_definitions AS (
 		rd.document_path,
 		COUNT(*) AS count
 	FROM codeintel_ranking_definitions rd
-	JOIN codeintel_ranking_exports cre ON cre.graph_key = %s AND cre.upload_id = rd.upload_id
+	JOIN codeintel_ranking_exports cre ON cre.graph_key = rd.graph_key AND cre.upload_id = rd.upload_id
 	JOIN referenced_symbols rs ON rs.symbol_name = rd.symbol_name
 	JOIN lsif_uploads u ON u.id = rd.upload_id
 	JOIN progress p ON TRUE
@@ -181,7 +179,7 @@ referenced_definitions AS (
 			FROM lsif_uploads u2
 			JOIN codeintel_ranking_definitions rd2 ON rd2.upload_id = u2.id
 			WHERE
-				rd2.graph_key = %s AND
+				rd2.graph_key = rd.graph_key AND
 				u.repository_id = u2.repository_id AND
 				u.root = u2.root AND
 				u.indexer = u2.indexer AND
