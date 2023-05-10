@@ -236,10 +236,11 @@ type ReindexIndexesOptions struct {
 }
 
 type ExportedUpload struct {
-	ID     int
-	Repo   string
-	RepoID int
-	Root   string
+	RecordID int
+	UploadID int
+	Repo     string
+	RepoID   int
+	Root     string
 }
 
 type IndexesWithRepositoryNamespace struct {
