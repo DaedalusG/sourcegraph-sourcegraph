@@ -13,7 +13,6 @@ func (s *store) InsertReferencesForRanking(
 	ctx context.Context,
 	rankingGraphKey string,
 	batchSize int,
-	uploadID int, // TODO - can remove
 	exportedUploadID int,
 	references chan string,
 ) (err error) {

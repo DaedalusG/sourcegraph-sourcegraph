@@ -48,8 +48,8 @@ func TestGetUploadsForRanking(t *testing.T) {
 		t.Fatalf("unexpected error getting uploads for ranking: %s", err)
 	}
 	expectedUploads := []uploadsshared.ExportedUpload{
-		{RecordID: 2, UploadID: 102, Repo: "bar", RepoID: 51},
-		{RecordID: 1, UploadID: 103, Repo: "baz", RepoID: 52},
+		{ExportedUploadID: 2, UploadID: 102, Repo: "bar", RepoID: 51},
+		{ExportedUploadID: 1, UploadID: 103, Repo: "baz", RepoID: 52},
 	}
 	if diff := cmp.Diff(expectedUploads, uploads); diff != "" {
 		t.Fatalf("unexpected uploads (-want +got):\n%s", diff)
@@ -61,7 +61,7 @@ func TestGetUploadsForRanking(t *testing.T) {
 		t.Fatalf("unexpected error getting uploads for ranking: %s", err)
 	}
 	expectedUploads = []uploadsshared.ExportedUpload{
-		{RecordID: 3, UploadID: 100, Repo: "foo", RepoID: 50},
+		{ExportedUploadID: 3, UploadID: 100, Repo: "foo", RepoID: 50},
 	}
 	if diff := cmp.Diff(expectedUploads, uploads); diff != "" {
 		t.Fatalf("unexpected uploads (-want +got):\n%s", diff)

@@ -31,8 +31,8 @@ type Store interface {
 
 	// Exported data (raw)
 	InsertDefinitionsForRanking(ctx context.Context, graphKey string, definitions chan shared.RankingDefinitions) error
-	InsertReferencesForRanking(ctx context.Context, graphKey string, batchSize int, uploadID, exportedUploadID int, references chan string) error
-	InsertInitialPathRanks(ctx context.Context, uploadID, exportedUploadID int, documentPaths chan string, batchSize int, graphKey string) error
+	InsertReferencesForRanking(ctx context.Context, graphKey string, batchSize int, exportedUploadID int, references chan string) error
+	InsertInitialPathRanks(ctx context.Context, exportedUploadID int, documentPaths chan string, batchSize int, graphKey string) error
 
 	// Coordinates mapper+reducer phases
 	Coordinate(ctx context.Context, derivativeGraphKey string) error

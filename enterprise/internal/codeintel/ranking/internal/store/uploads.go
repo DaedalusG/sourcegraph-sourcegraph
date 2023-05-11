@@ -68,8 +68,8 @@ inserted AS (
 	RETURNING id, upload_id
 )
 SELECT
-	i.id,
 	i.upload_id,
+	i.id,
 	c.repository_name,
 	c.repository_id,
 	c.root
@@ -79,7 +79,7 @@ ORDER BY c.upload_id
 `
 
 var scanUploads = basestore.NewSliceScanner(func(s dbutil.Scanner) (u shared.ExportedUpload, _ error) {
-	err := s.Scan(&u.RecordID, &u.UploadID, &u.Repo, &u.RepoID, &u.Root)
+	err := s.Scan(&u.UploadID, &u.ExportedUploadID, &u.Repo, &u.RepoID, &u.Root)
 	return u, err
 })
 

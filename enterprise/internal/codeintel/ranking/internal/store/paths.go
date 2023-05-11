@@ -11,8 +11,7 @@ import (
 	"github.com/sourcegraph/sourcegraph/internal/observation"
 )
 
-// TODO - can remove uploadID
-func (s *store) InsertInitialPathRanks(ctx context.Context, uploadID, exportedUploadID int, documentPaths chan string, batchSize int, graphKey string) (err error) {
+func (s *store) InsertInitialPathRanks(ctx context.Context, exportedUploadID int, documentPaths chan string, batchSize int, graphKey string) (err error) {
 	ctx, _, endObservation := s.operations.insertInitialPathRanks.With(ctx, &err, observation.Args{LogFields: []otlog.Field{
 		otlog.String("graphKey", graphKey),
 	}})

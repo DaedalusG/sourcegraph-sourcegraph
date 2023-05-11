@@ -104,7 +104,7 @@ func exportRankingGraph(
 				}
 				close(paths)
 
-				if err := tx.InsertInitialPathRanks(ctx, upload.UploadID, upload.RecordID, paths, writeBatchSize, graphKey); err != nil {
+				if err := tx.InsertInitialPathRanks(ctx, upload.ExportedUploadID, paths, writeBatchSize, graphKey); err != nil {
 					logger.Error(
 						"Failed to insert initial path counts",
 						log.Int("id", upload.UploadID),
@@ -168,7 +168,7 @@ func setDefinitionsAndReferencesForUpload(
 		}
 	}()
 
-	if err := store.InsertReferencesForRanking(ctx, rankingGraphKey, batchSize, upload.UploadID, upload.RecordID, references); err != nil {
+	if err := store.InsertReferencesForRanking(ctx, rankingGraphKey, batchSize, upload.ExportedUploadID, references); err != nil {
 		for range references {
 			// Drain channel to ensure it closes
 		}
@@ -200,7 +200,7 @@ func setDefinitionsForUpload(
 			if scip.SymbolRole_Definition.Matches(occ) {
 				definitions <- shared.RankingDefinitions{
 					UploadID:         upload.UploadID,
-					ExportedUploadID: upload.RecordID,
+					ExportedUploadID: upload.ExportedUploadID,
 					SymbolName:       occ.Symbol,
 					DocumentPath:     filepath.Join(upload.Root, path),
 				}
