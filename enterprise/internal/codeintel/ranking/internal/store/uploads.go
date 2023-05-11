@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/keegancsmith/sqlf"
@@ -20,16 +19,12 @@ func (s *store) GetUploadsForRanking(ctx context.Context, graphKey, objectPrefix
 	ctx, _, endObservation := s.operations.getUploadsForRanking.With(ctx, &err, observation.Args{})
 	defer endObservation(1, observation.Args{})
 
-	u, err := scanUploads(s.db.Query(ctx, sqlf.Sprintf(
+	return scanUploads(s.db.Query(ctx, sqlf.Sprintf(
 		getUploadsForRankingQuery,
 		graphKey,
 		batchSize,
 		graphKey,
 	)))
-	for _, x := range u {
-		fmt.Printf("...%d\n", x.UploadID)
-	}
-	return u, err
 }
 
 const getUploadsForRankingQuery = `
@@ -88,9 +83,6 @@ func (s *store) VacuumAbandonedExportedUploads(ctx context.Context, graphKey str
 	defer endObservation(1, observation.Args{})
 
 	count, _, err := basestore.ScanFirstInt(s.db.Query(ctx, sqlf.Sprintf(vacuumAbandonedExportedUploadsQuery, graphKey, graphKey, batchSize)))
-	if count != 0 {
-		fmt.Printf(">A: %d\n", count)
-	}
 	return count, err
 }
 
@@ -138,9 +130,6 @@ func (s *store) SoftDeleteStaleExportedUploads(ctx context.Context, graphKey str
 		}
 	}
 
-	if numExportedUploadRecordsScanned != 0 {
-		fmt.Printf(">F: %d, %d\n", numExportedUploadRecordsScanned, numStaleExportedUploadRecordsDeleted)
-	}
 	return numExportedUploadRecordsScanned, numStaleExportedUploadRecordsDeleted, nil
 }
 
@@ -201,9 +190,6 @@ func (s *store) VacuumDeletedExportedUploads(ctx context.Context, derivativeGrap
 		derivativeGraphKey,
 		vacuumBatchSize,
 	)))
-	if count != 0 {
-		fmt.Printf(">E: %d\n", count)
-	}
 	return count, err
 }
 

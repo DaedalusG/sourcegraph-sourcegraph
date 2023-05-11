@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/keegancsmith/sqlf"
 	otlog "github.com/opentracing/opentracing-go/log"
@@ -48,9 +47,6 @@ func (s *store) InsertPathRanks(
 		return 0, 0, err
 	}
 
-	if numInputsProcessed != 0 {
-		fmt.Printf(">R: %d\n", numInputsProcessed)
-	}
 	return numInputsProcessed, numPathRanksInserted, nil
 }
 

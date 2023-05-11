@@ -2,7 +2,6 @@ package store
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/keegancsmith/sqlf"
 	otlog "github.com/opentracing/opentracing-go/log"
@@ -55,9 +54,6 @@ func (s *store) InsertPathCountInputs(
 		}
 	}
 
-	if numReferenceRecordsProcessed != 0 {
-		fmt.Printf(">M: %d\n", numReferenceRecordsProcessed)
-	}
 	return numReferenceRecordsProcessed, numInputsInserted, nil
 }
 
@@ -257,9 +253,6 @@ func (s *store) InsertInitialPathCounts(
 		}
 	}
 
-	if numInitialPathsProcessed != 0 {
-		fmt.Printf(">P: %d\n", numInitialPathsProcessed)
-	}
 	return numInitialPathsProcessed, numInitialPathRanksInserted, nil
 }
 
