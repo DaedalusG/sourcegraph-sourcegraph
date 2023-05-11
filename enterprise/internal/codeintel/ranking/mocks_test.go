@@ -126,7 +126,7 @@ func NewMockStore() *MockStore {
 			},
 		},
 		InsertInitialPathRanksFunc: &StoreInsertInitialPathRanksFunc{
-			defaultHook: func(context.Context, int, chan string, int, string) (r0 error) {
+			defaultHook: func(context.Context, int, int, chan string, int, string) (r0 error) {
 				return
 			},
 		},
@@ -141,7 +141,7 @@ func NewMockStore() *MockStore {
 			},
 		},
 		InsertReferencesForRankingFunc: &StoreInsertReferencesForRankingFunc{
-			defaultHook: func(context.Context, string, int, int, chan string) (r0 error) {
+			defaultHook: func(context.Context, string, int, int, int, chan string) (r0 error) {
 				return
 			},
 		},
@@ -223,7 +223,7 @@ func NewStrictMockStore() *MockStore {
 			},
 		},
 		InsertInitialPathRanksFunc: &StoreInsertInitialPathRanksFunc{
-			defaultHook: func(context.Context, int, chan string, int, string) error {
+			defaultHook: func(context.Context, int, int, chan string, int, string) error {
 				panic("unexpected invocation of MockStore.InsertInitialPathRanks")
 			},
 		},
@@ -238,7 +238,7 @@ func NewStrictMockStore() *MockStore {
 			},
 		},
 		InsertReferencesForRankingFunc: &StoreInsertReferencesForRankingFunc{
-			defaultHook: func(context.Context, string, int, int, chan string) error {
+			defaultHook: func(context.Context, string, int, int, int, chan string) error {
 				panic("unexpected invocation of MockStore.InsertReferencesForRanking")
 			},
 		},
@@ -1115,24 +1115,24 @@ func (c StoreInsertInitialPathCountsFuncCall) Results() []interface{} {
 // InsertInitialPathRanks method of the parent MockStore instance is
 // invoked.
 type StoreInsertInitialPathRanksFunc struct {
-	defaultHook func(context.Context, int, chan string, int, string) error
-	hooks       []func(context.Context, int, chan string, int, string) error
+	defaultHook func(context.Context, int, int, chan string, int, string) error
+	hooks       []func(context.Context, int, int, chan string, int, string) error
 	history     []StoreInsertInitialPathRanksFuncCall
 	mutex       sync.Mutex
 }
 
 // InsertInitialPathRanks delegates to the next hook function in the queue
 // and stores the parameter and result values of this invocation.
-func (m *MockStore) InsertInitialPathRanks(v0 context.Context, v1 int, v2 chan string, v3 int, v4 string) error {
-	r0 := m.InsertInitialPathRanksFunc.nextHook()(v0, v1, v2, v3, v4)
-	m.InsertInitialPathRanksFunc.appendCall(StoreInsertInitialPathRanksFuncCall{v0, v1, v2, v3, v4, r0})
+func (m *MockStore) InsertInitialPathRanks(v0 context.Context, v1 int, v2 int, v3 chan string, v4 int, v5 string) error {
+	r0 := m.InsertInitialPathRanksFunc.nextHook()(v0, v1, v2, v3, v4, v5)
+	m.InsertInitialPathRanksFunc.appendCall(StoreInsertInitialPathRanksFuncCall{v0, v1, v2, v3, v4, v5, r0})
 	return r0
 }
 
 // SetDefaultHook sets function that is called when the
 // InsertInitialPathRanks method of the parent MockStore instance is invoked
 // and the hook queue is empty.
-func (f *StoreInsertInitialPathRanksFunc) SetDefaultHook(hook func(context.Context, int, chan string, int, string) error) {
+func (f *StoreInsertInitialPathRanksFunc) SetDefaultHook(hook func(context.Context, int, int, chan string, int, string) error) {
 	f.defaultHook = hook
 }
 
@@ -1140,7 +1140,7 @@ func (f *StoreInsertInitialPathRanksFunc) SetDefaultHook(hook func(context.Conte
 // InsertInitialPathRanks method of the parent MockStore instance invokes
 // the hook at the front of the queue and discards it. After the queue is
 // empty, the default hook function is invoked for any future action.
-func (f *StoreInsertInitialPathRanksFunc) PushHook(hook func(context.Context, int, chan string, int, string) error) {
+func (f *StoreInsertInitialPathRanksFunc) PushHook(hook func(context.Context, int, int, chan string, int, string) error) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -1149,19 +1149,19 @@ func (f *StoreInsertInitialPathRanksFunc) PushHook(hook func(context.Context, in
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *StoreInsertInitialPathRanksFunc) SetDefaultReturn(r0 error) {
-	f.SetDefaultHook(func(context.Context, int, chan string, int, string) error {
+	f.SetDefaultHook(func(context.Context, int, int, chan string, int, string) error {
 		return r0
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *StoreInsertInitialPathRanksFunc) PushReturn(r0 error) {
-	f.PushHook(func(context.Context, int, chan string, int, string) error {
+	f.PushHook(func(context.Context, int, int, chan string, int, string) error {
 		return r0
 	})
 }
 
-func (f *StoreInsertInitialPathRanksFunc) nextHook() func(context.Context, int, chan string, int, string) error {
+func (f *StoreInsertInitialPathRanksFunc) nextHook() func(context.Context, int, int, chan string, int, string) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -1202,13 +1202,16 @@ type StoreInsertInitialPathRanksFuncCall struct {
 	Arg1 int
 	// Arg2 is the value of the 3rd argument passed to this method
 	// invocation.
-	Arg2 chan string
+	Arg2 int
 	// Arg3 is the value of the 4th argument passed to this method
 	// invocation.
-	Arg3 int
+	Arg3 chan string
 	// Arg4 is the value of the 5th argument passed to this method
 	// invocation.
-	Arg4 string
+	Arg4 int
+	// Arg5 is the value of the 6th argument passed to this method
+	// invocation.
+	Arg5 string
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 error
@@ -1217,7 +1220,7 @@ type StoreInsertInitialPathRanksFuncCall struct {
 // Args returns an interface slice containing the arguments of this
 // invocation.
 func (c StoreInsertInitialPathRanksFuncCall) Args() []interface{} {
-	return []interface{}{c.Arg0, c.Arg1, c.Arg2, c.Arg3, c.Arg4}
+	return []interface{}{c.Arg0, c.Arg1, c.Arg2, c.Arg3, c.Arg4, c.Arg5}
 }
 
 // Results returns an interface slice containing the results of this
@@ -1458,24 +1461,24 @@ func (c StoreInsertPathRanksFuncCall) Results() []interface{} {
 // InsertReferencesForRanking method of the parent MockStore instance is
 // invoked.
 type StoreInsertReferencesForRankingFunc struct {
-	defaultHook func(context.Context, string, int, int, chan string) error
-	hooks       []func(context.Context, string, int, int, chan string) error
+	defaultHook func(context.Context, string, int, int, int, chan string) error
+	hooks       []func(context.Context, string, int, int, int, chan string) error
 	history     []StoreInsertReferencesForRankingFuncCall
 	mutex       sync.Mutex
 }
 
 // InsertReferencesForRanking delegates to the next hook function in the
 // queue and stores the parameter and result values of this invocation.
-func (m *MockStore) InsertReferencesForRanking(v0 context.Context, v1 string, v2 int, v3 int, v4 chan string) error {
-	r0 := m.InsertReferencesForRankingFunc.nextHook()(v0, v1, v2, v3, v4)
-	m.InsertReferencesForRankingFunc.appendCall(StoreInsertReferencesForRankingFuncCall{v0, v1, v2, v3, v4, r0})
+func (m *MockStore) InsertReferencesForRanking(v0 context.Context, v1 string, v2 int, v3 int, v4 int, v5 chan string) error {
+	r0 := m.InsertReferencesForRankingFunc.nextHook()(v0, v1, v2, v3, v4, v5)
+	m.InsertReferencesForRankingFunc.appendCall(StoreInsertReferencesForRankingFuncCall{v0, v1, v2, v3, v4, v5, r0})
 	return r0
 }
 
 // SetDefaultHook sets function that is called when the
 // InsertReferencesForRanking method of the parent MockStore instance is
 // invoked and the hook queue is empty.
-func (f *StoreInsertReferencesForRankingFunc) SetDefaultHook(hook func(context.Context, string, int, int, chan string) error) {
+func (f *StoreInsertReferencesForRankingFunc) SetDefaultHook(hook func(context.Context, string, int, int, int, chan string) error) {
 	f.defaultHook = hook
 }
 
@@ -1484,7 +1487,7 @@ func (f *StoreInsertReferencesForRankingFunc) SetDefaultHook(hook func(context.C
 // invokes the hook at the front of the queue and discards it. After the
 // queue is empty, the default hook function is invoked for any future
 // action.
-func (f *StoreInsertReferencesForRankingFunc) PushHook(hook func(context.Context, string, int, int, chan string) error) {
+func (f *StoreInsertReferencesForRankingFunc) PushHook(hook func(context.Context, string, int, int, int, chan string) error) {
 	f.mutex.Lock()
 	f.hooks = append(f.hooks, hook)
 	f.mutex.Unlock()
@@ -1493,19 +1496,19 @@ func (f *StoreInsertReferencesForRankingFunc) PushHook(hook func(context.Context
 // SetDefaultReturn calls SetDefaultHook with a function that returns the
 // given values.
 func (f *StoreInsertReferencesForRankingFunc) SetDefaultReturn(r0 error) {
-	f.SetDefaultHook(func(context.Context, string, int, int, chan string) error {
+	f.SetDefaultHook(func(context.Context, string, int, int, int, chan string) error {
 		return r0
 	})
 }
 
 // PushReturn calls PushHook with a function that returns the given values.
 func (f *StoreInsertReferencesForRankingFunc) PushReturn(r0 error) {
-	f.PushHook(func(context.Context, string, int, int, chan string) error {
+	f.PushHook(func(context.Context, string, int, int, int, chan string) error {
 		return r0
 	})
 }
 
-func (f *StoreInsertReferencesForRankingFunc) nextHook() func(context.Context, string, int, int, chan string) error {
+func (f *StoreInsertReferencesForRankingFunc) nextHook() func(context.Context, string, int, int, int, chan string) error {
 	f.mutex.Lock()
 	defer f.mutex.Unlock()
 
@@ -1553,7 +1556,10 @@ type StoreInsertReferencesForRankingFuncCall struct {
 	Arg3 int
 	// Arg4 is the value of the 5th argument passed to this method
 	// invocation.
-	Arg4 chan string
+	Arg4 int
+	// Arg5 is the value of the 6th argument passed to this method
+	// invocation.
+	Arg5 chan string
 	// Result0 is the value of the 1st result returned from this method
 	// invocation.
 	Result0 error
@@ -1562,7 +1568,7 @@ type StoreInsertReferencesForRankingFuncCall struct {
 // Args returns an interface slice containing the arguments of this
 // invocation.
 func (c StoreInsertReferencesForRankingFuncCall) Args() []interface{} {
-	return []interface{}{c.Arg0, c.Arg1, c.Arg2, c.Arg3, c.Arg4}
+	return []interface{}{c.Arg0, c.Arg1, c.Arg2, c.Arg3, c.Arg4, c.Arg5}
 }
 
 // Results returns an interface slice containing the results of this

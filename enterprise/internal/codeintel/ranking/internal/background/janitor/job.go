@@ -27,8 +27,7 @@ func NewExportedUploadsJanitor(
 		Interval:    config.Interval,
 		Metrics:     background.NewJanitorMetrics(observationCtx, name, recordTypeName),
 		CleanupFunc: func(ctx context.Context) (numRecordsScanned int, numRecordsAltered int, err error) {
-			numDeleted, err := softDeleteStaleExportedUploads(ctx, store)
-			return numDeleted, numDeleted, err
+			return softDeleteStaleExportedUploads(ctx, store)
 		},
 	})
 }
@@ -46,7 +45,8 @@ func NewDeletedUploadsJanitor(
 		Interval:    config.Interval,
 		Metrics:     background.NewJanitorMetrics(observationCtx, name, recordTypeName),
 		CleanupFunc: func(ctx context.Context) (numRecordsScanned int, numRecordsAltered int, err error) {
-			return vacuumDeletedExportedUploads(ctx, store)
+			numDeleted, err := vacuumDeletedExportedUploads(ctx, store)
+			return numDeleted, numDeleted, err
 		},
 	})
 }
@@ -107,77 +107,20 @@ func NewRankJanitor(
 	})
 }
 
-func NewOrphanedDefinitionsJanitor(
-	observationCtx *observation.Context,
-	store store.Store,
-	config *Config,
-) goroutine.BackgroundRoutine {
-	name := "codeintel.ranking.orphaned-definitions-janitor"
-
-	return background.NewJanitorJob(context.Background(), background.JanitorOptions{
-		Name:        name,
-		Description: "Removes definition data associated with deleted exports.",
-		Interval:    config.Interval,
-		Metrics:     background.NewJanitorMetrics(observationCtx, name, recordTypeName),
-		CleanupFunc: func(ctx context.Context) (numRecordsScanned int, numRecordsAltered int, err error) {
-			numDeleted, err := vacuumOrphanedDefinitions(ctx, store)
-			return numDeleted, numDeleted, err
-		},
-	})
-}
-
-func NewOrphanedReferencesJanitor(
-	observationCtx *observation.Context,
-	store store.Store,
-	config *Config,
-) goroutine.BackgroundRoutine {
-	name := "codeintel.ranking.orphaned-references-janitor"
-
-	return background.NewJanitorJob(context.Background(), background.JanitorOptions{
-		Name:        name,
-		Description: "Removes reference data associated with deleted exports.",
-		Interval:    config.Interval,
-		Metrics:     background.NewJanitorMetrics(observationCtx, name, recordTypeName),
-		CleanupFunc: func(ctx context.Context) (numRecordsScanned int, numRecordsAltered int, err error) {
-			numDeleted, err := vacuumOrphanedReferences(ctx, store)
-			return numDeleted, numDeleted, err
-		},
-	})
-}
-
-func NewOrphanedPathsJanitor(
-	observationCtx *observation.Context,
-	store store.Store,
-	config *Config,
-) goroutine.BackgroundRoutine {
-	name := "codeintel.ranking.orphaned-paths-janitor"
-
-	return background.NewJanitorJob(context.Background(), background.JanitorOptions{
-		Name:        name,
-		Description: "Removes path data associated with deleted exports.",
-		Interval:    config.Interval,
-		Metrics:     background.NewJanitorMetrics(observationCtx, name, recordTypeName),
-		CleanupFunc: func(ctx context.Context) (numRecordsScanned int, numRecordsAltered int, err error) {
-			numDeleted, err := vacuumOrphanedPaths(ctx, store)
-			return numDeleted, numDeleted, err
-		},
-	})
-}
-
-func softDeleteStaleExportedUploads(ctx context.Context, store store.Store) (int, error) {
-	if enabled := conf.CodeIntelRankingDocumentReferenceCountsEnabled(); !enabled {
-		return 0, nil
-	}
-
-	return store.VacuumAbandonedExportedUploads(ctx, rankingshared.GraphKey(), vacuumBatchSize)
-}
-
-func vacuumDeletedExportedUploads(ctx context.Context, store store.Store) (int, int, error) {
+func softDeleteStaleExportedUploads(ctx context.Context, store store.Store) (int, int, error) {
 	if enabled := conf.CodeIntelRankingDocumentReferenceCountsEnabled(); !enabled {
 		return 0, 0, nil
 	}
 
-	return store.SoftDeleteStaleExportedUploads(ctx, rankingshared.DerivativeGraphKeyFromTime(time.Now()))
+	return store.SoftDeleteStaleExportedUploads(ctx, rankingshared.GraphKey())
+}
+
+func vacuumDeletedExportedUploads(ctx context.Context, store store.Store) (int, error) {
+	if enabled := conf.CodeIntelRankingDocumentReferenceCountsEnabled(); !enabled {
+		return 0, nil
+	}
+
+	return store.VacuumDeletedExportedUploads(ctx, rankingshared.DerivativeGraphKeyFromTime(time.Now()))
 }
 
 const vacuumBatchSize = 100 // TODO - configure via envvar
@@ -187,7 +130,7 @@ func vacuumAbandonedExportedUploads(ctx context.Context, store store.Store) (int
 		return 0, nil
 	}
 
-	return store.VacuumDeletedExportedUploads(ctx, rankingshared.DerivativeGraphKeyFromTime(time.Now()))
+	return store.VacuumAbandonedExportedUploads(ctx, rankingshared.GraphKey(), vacuumBatchSize)
 }
 
 func vacuumStaleGraphs(ctx context.Context, store store.Store) (int, error) {
@@ -204,28 +147,4 @@ func vacuumStaleRanks(ctx context.Context, store store.Store) (int, int, error) 
 	}
 
 	return store.VacuumStaleRanks(ctx, rankingshared.DerivativeGraphKeyFromTime(time.Now()))
-}
-
-func vacuumOrphanedDefinitions(ctx context.Context, store store.Store) (int, error) {
-	if enabled := conf.CodeIntelRankingDocumentReferenceCountsEnabled(); !enabled {
-		return 0, nil
-	}
-
-	return store.VacuumOrphanedDefinitions(ctx)
-}
-
-func vacuumOrphanedReferences(ctx context.Context, store store.Store) (int, error) {
-	if enabled := conf.CodeIntelRankingDocumentReferenceCountsEnabled(); !enabled {
-		return 0, nil
-	}
-
-	return store.VacuumOrphanedReferences(ctx)
-}
-
-func vacuumOrphanedPaths(ctx context.Context, store store.Store) (int, error) {
-	if enabled := conf.CodeIntelRankingDocumentReferenceCountsEnabled(); !enabled {
-		return 0, nil
-	}
-
-	return store.VacuumOrphanedPaths(ctx)
 }

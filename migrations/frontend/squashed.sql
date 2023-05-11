@@ -115,15 +115,6 @@ CREATE FUNCTION changesets_computed_state_ensure() RETURNS trigger
     RETURN NEW;
 END $$;
 
-CREATE FUNCTION codeintel_ranking_janitor_enqueue() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$ BEGIN
-    INSERT INTO codeintel_ranking_definitions_janitor_queue (exported_upload_id) SELECT id FROM oldtab;
-    INSERT INTO codeintel_ranking_references_janitor_queue  (exported_upload_id) SELECT id FROM oldtab;
-    INSERT INTO codeintel_ranking_paths_janitor_queue       (exported_upload_id) SELECT id FROM oldtab;
-    RETURN NULL;
-END $$;
-
 CREATE FUNCTION delete_batch_change_reference_on_changesets() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
@@ -1760,10 +1751,6 @@ CREATE SEQUENCE codeintel_ranking_definitions_id_seq
 
 ALTER SEQUENCE codeintel_ranking_definitions_id_seq OWNED BY codeintel_ranking_definitions.id;
 
-CREATE TABLE codeintel_ranking_definitions_janitor_queue (
-    exported_upload_id integer NOT NULL
-);
-
 CREATE TABLE codeintel_ranking_exports (
     upload_id integer,
     graph_key text NOT NULL,
@@ -1800,10 +1787,6 @@ CREATE SEQUENCE codeintel_ranking_path_counts_inputs_id_seq
     CACHE 1;
 
 ALTER SEQUENCE codeintel_ranking_path_counts_inputs_id_seq OWNED BY codeintel_ranking_path_counts_inputs.id;
-
-CREATE TABLE codeintel_ranking_paths_janitor_queue (
-    exported_upload_id integer NOT NULL
-);
 
 CREATE TABLE codeintel_ranking_progress (
     id bigint NOT NULL,
@@ -1844,10 +1827,6 @@ CREATE SEQUENCE codeintel_ranking_references_id_seq
     CACHE 1;
 
 ALTER SEQUENCE codeintel_ranking_references_id_seq OWNED BY codeintel_ranking_references.id;
-
-CREATE TABLE codeintel_ranking_references_janitor_queue (
-    exported_upload_id integer NOT NULL
-);
 
 CREATE TABLE codeintel_ranking_references_processed (
     graph_key text NOT NULL,
@@ -4997,9 +4976,6 @@ ALTER TABLE ONLY codeintel_initial_path_ranks_processed
 ALTER TABLE ONLY codeintel_path_ranks
     ADD CONSTRAINT codeintel_path_ranks_pkey PRIMARY KEY (id);
 
-ALTER TABLE ONLY codeintel_ranking_definitions_janitor_queue
-    ADD CONSTRAINT codeintel_ranking_definitions_janitor_qu_exported_upload_id_key UNIQUE (exported_upload_id);
-
 ALTER TABLE ONLY codeintel_ranking_definitions
     ADD CONSTRAINT codeintel_ranking_definitions_pkey PRIMARY KEY (id);
 
@@ -5009,17 +4985,11 @@ ALTER TABLE ONLY codeintel_ranking_exports
 ALTER TABLE ONLY codeintel_ranking_path_counts_inputs
     ADD CONSTRAINT codeintel_ranking_path_counts_inputs_pkey PRIMARY KEY (id);
 
-ALTER TABLE ONLY codeintel_ranking_paths_janitor_queue
-    ADD CONSTRAINT codeintel_ranking_paths_janitor_queue_exported_upload_id_key UNIQUE (exported_upload_id);
-
 ALTER TABLE ONLY codeintel_ranking_progress
     ADD CONSTRAINT codeintel_ranking_progress_graph_key_key UNIQUE (graph_key);
 
 ALTER TABLE ONLY codeintel_ranking_progress
     ADD CONSTRAINT codeintel_ranking_progress_pkey PRIMARY KEY (id);
-
-ALTER TABLE ONLY codeintel_ranking_references_janitor_queue
-    ADD CONSTRAINT codeintel_ranking_references_janitor_que_exported_upload_id_key UNIQUE (exported_upload_id);
 
 ALTER TABLE ONLY codeintel_ranking_references
     ADD CONSTRAINT codeintel_ranking_references_pkey PRIMARY KEY (id);
@@ -5889,8 +5859,6 @@ CREATE TRIGGER batch_spec_workspace_execution_last_dequeues_update AFTER UPDATE 
 
 CREATE TRIGGER changesets_update_computed_state BEFORE INSERT OR UPDATE ON changesets FOR EACH ROW EXECUTE FUNCTION changesets_computed_state_ensure();
 
-CREATE TRIGGER codeintel_ranking_exports_delete AFTER DELETE ON codeintel_ranking_exports REFERENCING OLD TABLE AS oldtab FOR EACH STATEMENT EXECUTE FUNCTION codeintel_ranking_janitor_enqueue();
-
 CREATE TRIGGER insert_codeintel_path_ranks_statistics BEFORE INSERT ON codeintel_path_ranks FOR EACH ROW EXECUTE FUNCTION update_codeintel_path_ranks_statistics_columns();
 
 CREATE TRIGGER trig_create_zoekt_repo_on_repo_insert AFTER INSERT ON repo FOR EACH ROW EXECUTE FUNCTION func_insert_zoekt_repo();
@@ -6117,16 +6085,16 @@ ALTER TABLE ONLY codeintel_autoindexing_exceptions
     ADD CONSTRAINT codeintel_autoindexing_exceptions_repository_id_fkey FOREIGN KEY (repository_id) REFERENCES repo(id) ON DELETE CASCADE;
 
 ALTER TABLE ONLY codeintel_initial_path_ranks
-    ADD CONSTRAINT codeintel_initial_path_ranks_exported_upload_id_fkey FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id);
+    ADD CONSTRAINT codeintel_initial_path_ranks_exported_upload_id_fkey FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id) ON DELETE CASCADE;
 
 ALTER TABLE ONLY codeintel_ranking_definitions
-    ADD CONSTRAINT codeintel_ranking_definitions_exported_upload_id_fkey FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id);
+    ADD CONSTRAINT codeintel_ranking_definitions_exported_upload_id_fkey FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id) ON DELETE CASCADE;
 
 ALTER TABLE ONLY codeintel_ranking_exports
     ADD CONSTRAINT codeintel_ranking_exports_upload_id_fkey FOREIGN KEY (upload_id) REFERENCES lsif_uploads(id) ON DELETE SET NULL;
 
 ALTER TABLE ONLY codeintel_ranking_references
-    ADD CONSTRAINT codeintel_ranking_references_exported_upload_id_fkey FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id);
+    ADD CONSTRAINT codeintel_ranking_references_exported_upload_id_fkey FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id) ON DELETE CASCADE;
 
 ALTER TABLE ONLY codeowners
     ADD CONSTRAINT codeowners_repo_id_fkey FOREIGN KEY (repo_id) REFERENCES repo(id) ON DELETE CASCADE;

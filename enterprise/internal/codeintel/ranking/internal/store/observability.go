@@ -16,9 +16,6 @@ type operations struct {
 	vacuumAbandonedExportedUploads *observation.Operation
 	softDeleteStaleExportedUploads *observation.Operation
 	vacuumDeletedExportedUploads   *observation.Operation
-	vacuumOrphanedDefinitions      *observation.Operation
-	vacuumOrphanedReferences       *observation.Operation
-	vacuumOrphanedPaths            *observation.Operation
 	insertDefinitionsForRanking    *observation.Operation
 	insertReferencesForRanking     *observation.Operation
 	insertInitialPathRanks         *observation.Operation
@@ -59,9 +56,6 @@ func newOperations(observationCtx *observation.Context) *operations {
 		vacuumAbandonedExportedUploads: op("VacuumAbandonedExportedUploads"),
 		softDeleteStaleExportedUploads: op("SoftDeleteStaleExportedUploads"),
 		vacuumDeletedExportedUploads:   op("VacuumDeletedExportedUploads"),
-		vacuumOrphanedDefinitions:      op("VacuumOrphanedDefinitions"),
-		vacuumOrphanedReferences:       op("VacuumOrphanedReferences"),
-		vacuumOrphanedPaths:            op("VacuumOrphanedPaths"),
 		insertDefinitionsForRanking:    op("InsertDefinitionsForRanking"),
 		insertReferencesForRanking:     op("InsertReferencesForRanking"),
 		insertInitialPathRanks:         op("InsertInitialPathRanks"),

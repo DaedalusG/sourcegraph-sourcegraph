@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/keegancsmith/sqlf"
 	otlog "github.com/opentracing/opentracing-go/log"
@@ -54,6 +55,9 @@ func (s *store) InsertPathCountInputs(
 		}
 	}
 
+	if numReferenceRecordsProcessed != 0 {
+		fmt.Printf(">M: %d\n", numReferenceRecordsProcessed)
+	}
 	return numReferenceRecordsProcessed, numInputsInserted, nil
 }
 
@@ -234,7 +238,6 @@ func (s *store) InsertInitialPathCounts(
 		insertInitialPathCountsInputsQuery,
 		derivativeGraphKey,
 		graphKey,
-		graphKey,
 		derivativeGraphKey,
 		batchSize,
 		derivativeGraphKey,
@@ -254,6 +257,9 @@ func (s *store) InsertInitialPathCounts(
 		}
 	}
 
+	if numInitialPathsProcessed != 0 {
+		fmt.Printf(">P: %d\n", numInitialPathsProcessed)
+	}
 	return numInitialPathsProcessed, numInitialPathRanksInserted, nil
 }
 
@@ -272,14 +278,14 @@ progress AS (
 unprocessed_path_counts AS (
 	SELECT
 		ipr.id,
-		ipr.upload_id,
+		cre.upload_id,
 		ipr.graph_key,
 		CASE
 			WHEN ipr.document_path != '' THEN array_append('{}'::text[], ipr.document_path)
 			ELSE ipr.document_paths
 		END AS document_paths
 	FROM codeintel_initial_path_ranks ipr
-	JOIN codeintel_ranking_exports cre ON cre.graph_key = %s AND cre.upload_id = ipr.upload_id
+	JOIN codeintel_ranking_exports cre ON cre.id = ipr.exported_upload_id
 	JOIN progress p ON TRUE
 	WHERE
 		ipr.graph_key = %s AND

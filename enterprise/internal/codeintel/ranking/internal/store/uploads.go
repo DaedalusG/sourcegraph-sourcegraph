@@ -20,12 +20,16 @@ func (s *store) GetUploadsForRanking(ctx context.Context, graphKey, objectPrefix
 	ctx, _, endObservation := s.operations.getUploadsForRanking.With(ctx, &err, observation.Args{})
 	defer endObservation(1, observation.Args{})
 
-	return scanUploads(s.db.Query(ctx, sqlf.Sprintf(
+	u, err := scanUploads(s.db.Query(ctx, sqlf.Sprintf(
 		getUploadsForRankingQuery,
 		graphKey,
 		batchSize,
 		graphKey,
 	)))
+	for _, x := range u {
+		fmt.Printf("...%d\n", x.UploadID)
+	}
+	return u, err
 }
 
 const getUploadsForRankingQuery = `
@@ -84,6 +88,9 @@ func (s *store) VacuumAbandonedExportedUploads(ctx context.Context, graphKey str
 	defer endObservation(1, observation.Args{})
 
 	count, _, err := basestore.ScanFirstInt(s.db.Query(ctx, sqlf.Sprintf(vacuumAbandonedExportedUploadsQuery, graphKey, graphKey, batchSize)))
+	if count != 0 {
+		fmt.Printf(">A: %d\n", count)
+	}
 	return count, err
 }
 
@@ -131,6 +138,9 @@ func (s *store) SoftDeleteStaleExportedUploads(ctx context.Context, graphKey str
 		}
 	}
 
+	if numExportedUploadRecordsScanned != 0 {
+		fmt.Printf(">F: %d, %d\n", numExportedUploadRecordsScanned, numStaleExportedUploadRecordsDeleted)
+	}
 	return numExportedUploadRecordsScanned, numStaleExportedUploadRecordsDeleted, nil
 }
 
@@ -155,7 +165,7 @@ candidates AS (
 		uvt.is_default_branch IS TRUE AS safe
 	FROM locked_exported_uploads leu
 	LEFT JOIN lsif_uploads u ON u.id = leu.upload_id
-	LEFT JOIN lsif_uploads_visible_at_tip uvt ON uvt.repository_id = u.repository_id AND uvt.upload_id = leu.upload_id
+	LEFT JOIN lsif_uploads_visible_at_tip uvt ON uvt.repository_id = u.repository_id AND uvt.upload_id = leu.upload_id AND uvt.is_default_branch
 ),
 updated_exported_uploads AS (
 	UPDATE codeintel_ranking_exports cre
@@ -191,6 +201,9 @@ func (s *store) VacuumDeletedExportedUploads(ctx context.Context, derivativeGrap
 		derivativeGraphKey,
 		vacuumBatchSize,
 	)))
+	if count != 0 {
+		fmt.Printf(">E: %d\n", count)
+	}
 	return count, err
 }
 
@@ -219,86 +232,4 @@ deleted_exported_uploads AS (
 	RETURNING 1
 )
 SELECT COUNT(*) FROM deleted_exported_uploads
-`
-
-// TODO - test
-func (s *store) VacuumOrphanedDefinitions(ctx context.Context) (numDefinitionRecordsDeleted int, err error) {
-	ctx, _, endObservation := s.operations.vacuumOrphanedDefinitions.With(ctx, &err, observation.Args{LogFields: []otlog.Field{}})
-	defer endObservation(1, observation.Args{})
-
-	return s.vacuumOrphanedData(
-		ctx,
-		sqlf.Sprintf("codeintel_ranking_definition_janitor_queue"),
-		sqlf.Sprintf("codeintel_ranking_definitions"),
-	)
-}
-
-// TODO - test
-func (s *store) VacuumOrphanedReferences(ctx context.Context) (numReferenceRecordsDeleted int, err error) {
-	ctx, _, endObservation := s.operations.vacuumOrphanedReferences.With(ctx, &err, observation.Args{LogFields: []otlog.Field{}})
-	defer endObservation(1, observation.Args{})
-
-	return s.vacuumOrphanedData(
-		ctx,
-		sqlf.Sprintf("codeintel_ranking_references_janitor_queue"),
-		sqlf.Sprintf("codeintel_ranking_references"),
-	)
-}
-
-// TODO - test
-func (s *store) VacuumOrphanedPaths(ctx context.Context) (numPathRecordsDeleted int, err error) {
-	ctx, _, endObservation := s.operations.vacuumOrphanedPaths.With(ctx, &err, observation.Args{LogFields: []otlog.Field{}})
-	defer endObservation(1, observation.Args{})
-
-	return s.vacuumOrphanedData(
-		ctx,
-		sqlf.Sprintf("codeintel_ranking_paths_janitor_queue"),
-		sqlf.Sprintf("codeintel_initial_path_ranks"),
-	)
-}
-
-func (s *store) vacuumOrphanedData(ctx context.Context, queueTable, dataTable *sqlf.Query) (int, error) {
-	vacuumBatchSize2 := vacuumBatchSize * 2 // TODO
-
-	count, _, err := basestore.ScanFirstInt(s.db.Query(ctx, sqlf.Sprintf(
-		vacuumOrphanedDataQuery,
-		queueTable, vacuumBatchSize,
-		dataTable, vacuumBatchSize2,
-		queueTable, dataTable,
-		dataTable,
-	)))
-	fmt.Printf("> %d\n", count)
-	return count, err
-}
-
-const vacuumOrphanedDataQuery = `
-WITH
-locked_queue_candidates AS (
-	SELECT q.exported_upload_id AS id
-	FROM %s q
-	ORDER BY q.exported_upload_id
-	LIMIT %s
-	FOR UPDATE SKIP LOCKED
-),
-locked_data_candidates AS (
-	SELECT id
-	FROM %s
-	WHERE exported_upload_id IN (SELECT id FROM locked_queue_candidates)
-	ORDER BY exported_upload_id, id
-	LIMIT %s
-	FOR UPDATE SKIP LOCKED
-),
-deleted_queue AS (
-	DELETE FROM %s
-	WHERE
-		exported_upload_id IN (locked_data_candidates) AND
-		exported_upload_id NOT IN (SELECT exported_upload_id FROM %s)
-	)
-),
-deleted_data AS (
-	DELETE FROM %s
-	WHERE id IN (SELECT id FROM locked_data_candidates)
-	RETURNING 1
-)
-SELECT COUNT(*) FROM deleted_data
 `

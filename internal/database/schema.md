@@ -856,7 +856,7 @@ Indexes:
     "codeintel_initial_path_ranks_exported_upload_id" btree (exported_upload_id)
     "codeintel_initial_path_ranks_graph_key_id" btree (graph_key, id)
 Foreign-key constraints:
-    "codeintel_initial_path_ranks_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id)
+    "codeintel_initial_path_ranks_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id) ON DELETE CASCADE
 Referenced by:
     TABLE "codeintel_initial_path_ranks_processed" CONSTRAINT "fk_codeintel_initial_path_ranks" FOREIGN KEY (codeintel_initial_path_ranks_id) REFERENCES codeintel_initial_path_ranks(id) ON DELETE CASCADE
 
@@ -926,17 +926,7 @@ Indexes:
     "codeintel_ranking_definitions_exported_upload_id" btree (exported_upload_id)
     "codeintel_ranking_definitions_graph_key_symbol_search" btree (graph_key, symbol_name, exported_upload_id, document_path)
 Foreign-key constraints:
-    "codeintel_ranking_definitions_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id)
-
-```
-
-# Table "public.codeintel_ranking_definitions_janitor_queue"
-```
-       Column       |  Type   | Collation | Nullable | Default 
---------------------+---------+-----------+----------+---------
- exported_upload_id | integer |           | not null | 
-Indexes:
-    "codeintel_ranking_definitions_janitor_qu_exported_upload_id_key" UNIQUE CONSTRAINT, btree (exported_upload_id)
+    "codeintel_ranking_definitions_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id) ON DELETE CASCADE
 
 ```
 
@@ -957,11 +947,9 @@ Indexes:
 Foreign-key constraints:
     "codeintel_ranking_exports_upload_id_fkey" FOREIGN KEY (upload_id) REFERENCES lsif_uploads(id) ON DELETE SET NULL
 Referenced by:
-    TABLE "codeintel_initial_path_ranks" CONSTRAINT "codeintel_initial_path_ranks_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id)
-    TABLE "codeintel_ranking_definitions" CONSTRAINT "codeintel_ranking_definitions_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id)
-    TABLE "codeintel_ranking_references" CONSTRAINT "codeintel_ranking_references_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id)
-Triggers:
-    codeintel_ranking_exports_delete AFTER DELETE ON codeintel_ranking_exports REFERENCING OLD TABLE AS oldtab FOR EACH STATEMENT EXECUTE FUNCTION codeintel_ranking_janitor_enqueue()
+    TABLE "codeintel_initial_path_ranks" CONSTRAINT "codeintel_initial_path_ranks_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id) ON DELETE CASCADE
+    TABLE "codeintel_ranking_definitions" CONSTRAINT "codeintel_ranking_definitions_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id) ON DELETE CASCADE
+    TABLE "codeintel_ranking_references" CONSTRAINT "codeintel_ranking_references_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id) ON DELETE CASCADE
 
 ```
 
@@ -979,16 +967,6 @@ Indexes:
     "codeintel_ranking_path_counts_inputs_pkey" PRIMARY KEY, btree (id)
     "codeintel_ranking_path_counts_inputs_graph_key_id" btree (graph_key, id)
     "codeintel_ranking_path_counts_inputs_graph_key_repository_id_id" btree (graph_key, repository_id, id) WHERE NOT processed
-
-```
-
-# Table "public.codeintel_ranking_paths_janitor_queue"
-```
-       Column       |  Type   | Collation | Nullable | Default 
---------------------+---------+-----------+----------+---------
- exported_upload_id | integer |           | not null | 
-Indexes:
-    "codeintel_ranking_paths_janitor_queue_exported_upload_id_key" UNIQUE CONSTRAINT, btree (exported_upload_id)
 
 ```
 
@@ -1025,23 +1003,13 @@ Indexes:
     "codeintel_ranking_references_exported_upload_id" btree (exported_upload_id)
     "codeintel_ranking_references_graph_key_id" btree (graph_key, id)
 Foreign-key constraints:
-    "codeintel_ranking_references_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id)
+    "codeintel_ranking_references_exported_upload_id_fkey" FOREIGN KEY (exported_upload_id) REFERENCES codeintel_ranking_exports(id) ON DELETE CASCADE
 Referenced by:
     TABLE "codeintel_ranking_references_processed" CONSTRAINT "fk_codeintel_ranking_reference" FOREIGN KEY (codeintel_ranking_reference_id) REFERENCES codeintel_ranking_references(id) ON DELETE CASCADE
 
 ```
 
 References for a given upload proceduced by background job consuming SCIP indexes.
-
-# Table "public.codeintel_ranking_references_janitor_queue"
-```
-       Column       |  Type   | Collation | Nullable | Default 
---------------------+---------+-----------+----------+---------
- exported_upload_id | integer |           | not null | 
-Indexes:
-    "codeintel_ranking_references_janitor_que_exported_upload_id_key" UNIQUE CONSTRAINT, btree (exported_upload_id)
-
-```
 
 # Table "public.codeintel_ranking_references_processed"
 ```
