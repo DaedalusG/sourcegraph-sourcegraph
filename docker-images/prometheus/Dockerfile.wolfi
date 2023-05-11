@@ -12,7 +12,7 @@ FROM prom/alertmanager:v0.25.0@sha256:db8303fa05341f5dc6b19b36a97325cd1b8307254e
 
 # Build monitoring definitions
 # hadolint ignore=DL3007
-FROM cgr.dev/chainguard/bash:latest AS monitoring_builder
+FROM cgr.dev/chainguard/bash:latest@sha256:e0590d8aae07f6a740bb475430f8aa5faae62addcf592d97a8ec71fab66a41a5 AS monitoring_builder
 RUN mkdir -p '/generated/prometheus'
 COPY ./.bin/monitoring-generator /bin/monitoring-generator
 RUN PROMETHEUS_DIR='/generated/prometheus' GRAFANA_DIR='' DOCS_DIR='' NO_PRUNE=true /bin/monitoring-generator
