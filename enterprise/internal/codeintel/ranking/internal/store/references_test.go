@@ -28,7 +28,7 @@ func TestInsertReferences(t *testing.T) {
 	mockReferences <- "bar"
 	mockReferences <- "baz"
 	close(mockReferences)
-	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 1, 1, mockReferences); err != nil {
+	if err := store.InsertReferencesForRanking(ctx, mockRankingGraphKey, mockRankingBatchSize, 1, mockReferences); err != nil {
 		t.Fatalf("unexpected error inserting references: %s", err)
 	}
 
